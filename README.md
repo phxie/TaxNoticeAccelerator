@@ -1,8 +1,12 @@
 # TaxNoticeAccelerator
 
-A dashboard for uploading tax notice PDFs and extracting structured
-fields (tax year, notice type, amount due, issuing agency, summary)
-with GPT-4o. Flask backend + React (Vite/TypeScript) frontend.
+Turn a pile of tax notice PDFs into a searchable table of what's owed, to whom, and why.
+
+Upload IRS or state tax notices and TaxReader uses Claude to pull out the key details: tax year, notice type, amount due, issuing agency, and a plain-English summary. Everything is shown in a local dashboard and can be exported to Google Sheets.
+
+![TaxNoticeAccelerator dashboard](docs/taxreader.png)
+
+![TaxNoticeAccelerator sheets](docs/Screenshot1.png)
 
 ## Requirements
 
