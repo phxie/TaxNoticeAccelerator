@@ -12,7 +12,7 @@ Upload IRS or state tax notices and TaxReader uses Claude to pull out the key de
 
 - [uv](https://docs.astral.sh/uv/) (Python package/env manager)
 - Node.js (for the frontend)
-- An OpenAI API key with GPT-4o access
+- An Anthropic API key
 
 ## Setup
 
@@ -20,7 +20,7 @@ Upload IRS or state tax notices and TaxReader uses Claude to pull out the key de
 cp .env.example .env
 ```
 
-Edit `.env` and set `OPENAI_API_KEY`.
+Edit `.env` and set `ANTHROPIC_API_KEY`.
 
 ## Running
 
@@ -56,7 +56,7 @@ API calls or touches the real `taxreader.db`/`taxdocs/`.
 ## Project layout
 
 - `app.py` — Flask app: upload, list, and file-download routes
-- `extract.py` — sends uploaded PDFs to GPT-4o and returns extracted fields
+- `extract.py` — sends uploaded PDFs to Claude and returns extracted fields
 - `db.py` — SQLite storage (`taxreader.db`, path configurable via `DB_PATH`)
 - `frontend/` — React + TypeScript dashboard
 - `taxdocs/` — uploaded PDFs are stored here (not committed)
