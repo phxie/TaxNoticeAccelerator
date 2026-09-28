@@ -1,6 +1,6 @@
-# TaxNoticeAccelerator
+# Tax Notice Accelerator
 
-Turn a pile of tax notice PDFs into a searchable table of what's owed, to whom, and why.
+Corporate tax teams need to contend with a never-ending stream of tax notices being mailed to their doorstep. Turn that pile of tax notice PDFs into a searchable table of what's owed, to whom, and why.
 
 Upload IRS or state tax notices and TaxReader uses Claude to pull out the key details: tax year, notice type, amount due, issuing agency, and a plain-English summary. Everything is shown in a local dashboard and can be exported to Google Sheets.
 
@@ -14,13 +14,27 @@ Upload IRS or state tax notices and TaxReader uses Claude to pull out the key de
 - Node.js (for the frontend)
 - An Anthropic API key
 
+## Notes
+
+- **PDF contents are sent to Anthropic's API** for extraction. See [Anthropic's privacy policy](https://www.anthropic.com/legal/privacy) for how API data is handled.
+
+
 ## Setup
 
 ```
 cp .env.example .env
 ```
 
-Edit `.env` and set `ANTHROPIC_API_KEY`.
+**To export to Google Sheets, the destination sheet must be shared with a [Service Account](https://docs.cloud.google.com/iam/docs/service-accounts-create#creating)**
+
+Edit `.env` and set:
+
+| Variable            | Required | Description                                             |
+| ------------------- | -------- | ------------------------------------------------------- |
+| `ANTHROPIC_API_KEY` | Yes      | Used to extract fields from uploaded PDFs               |
+| `DB_PATH`           | No       | SQLite database location (default: `taxreader.db`)     |
+| `GOOGLE_SHEET_ID`           | No       | ID of the target Google Sheet (the long id in its URL) that the dashboard syncs to     |
+| `GOOGLE_SERVICE_ACCOUNT_FILE`           | No       | [Google service-account](https://docs.cloud.google.com/iam/docs/keys-create-delete#creating) JSON key path, used to sync the dashboard to a Google Sheet (default: `service-account.json`     |
 
 ## Running
 
@@ -52,6 +66,8 @@ uv run pytest
 Unit tests for `app.py` live in `tests/`. They mock every call into
 `extract.py` and `sheets.py`, so the suite never makes real Anthropic/Google
 API calls or touches the real `taxreader.db`/`taxdocs/`.
+
+
 
 ## Project layout
 
