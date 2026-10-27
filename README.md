@@ -2,7 +2,7 @@
 
 Corporate tax teams need to contend with a never-ending stream of tax notices being mailed to their doorstep. Turn that pile of tax notice PDFs into a searchable table of what's owed, to whom, and why.
 
-Upload IRS or state tax notices and TaxReader uses Claude to pull out the key details: tax year, notice type, amount due, issuing agency, and a plain-English summary. Everything is shown in a local dashboard and can be exported to Google Sheets.
+Upload IRS or state tax notices and TaxReader uses Claude to pull out the key details: tax year, notice type, amount due, issuing agency, a plain-English summary, and a high/medium/low priority rating. Everything is shown in a local dashboard and can be exported to Google Sheets.
 
 ![TaxNoticeAccelerator dashboard](docs/taxreader.png)
 

@@ -18,6 +18,8 @@ client = Anthropic()  # reads ANTHROPIC_API_KEY from env
 
 MODEL = "claude-haiku-4-5"
 
+PRIORITIES = ["high", "medium", "low"]
+
 TAX_NOTICE_SCHEMA = {
     "type": "object",
     "properties": {
@@ -26,8 +28,19 @@ TAX_NOTICE_SCHEMA = {
         "jurisdiction": {"type": ["string", "null"], "description": "e.g. IRS, California Franchise Tax Board, etc."},
         "issue_summary": {"type": "string", "description": "1-2 sentence plain-language summary of the issue"},
         "amount_due": {"type": ["number", "null"], "description": "Total amount owed, if stated"},
+        "priority": {
+            "type": "string",
+            "enum": PRIORITIES,
+            "description": (
+                "How urgently the notice needs attention. "
+                "high: enforcement action (levy, lien, seizure, final notice of intent), "
+                "a response deadline within ~30 days, or a large balance due. "
+                "medium: a balance due or response requested with no imminent enforcement. "
+                "low: informational only, no action or payment required."
+            ),
+        },
     },
-    "required": ["issue_summary"],
+    "required": ["issue_summary", "priority"],
     "additionalProperties": False,
 }
 

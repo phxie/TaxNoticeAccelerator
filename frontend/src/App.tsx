@@ -6,6 +6,7 @@ import {
   syncToSheet,
   updateDocumentStatus,
   uploadDocument,
+  type Priority,
   type TaxDocument,
 } from "./api";
 
@@ -36,6 +37,24 @@ function StatusPill({ status, onClick }: { status: string; onClick: () => void }
   );
 }
 
+const PRIORITY_STYLES: Record<Priority, string> = {
+  high: "bg-red-100 text-red-800",
+  medium: "bg-yellow-100 text-yellow-800",
+  low: "bg-green-100 text-green-800",
+};
+
+// Lower rank = more urgent.
+const PRIORITY_RANK: Record<Priority, number> = { high: 0, medium: 1, low: 2 };
+
+function PriorityPill({ priority }: { priority: Priority | null }) {
+  if (priority === null) return <span className="text-gray-600">—</span>;
+  return (
+    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${PRIORITY_STYLES[priority]}`}>
+      {priority}
+    </span>
+  );
+}
+
 const SORT_OPTIONS = [
   { value: "uploaded_desc", label: "Upload Date (Newest)" },
   { value: "uploaded_asc", label: "Upload Date (Oldest)" },
@@ -45,6 +64,7 @@ const SORT_OPTIONS = [
   { value: "tax_year_asc", label: "Tax Year (Oldest)" },
   { value: "amount_due_desc", label: "Amount Due (High to Low)" },
   { value: "amount_due_asc", label: "Amount Due (Low to High)" },
+  { value: "priority", label: "Priority (High to Low)" },
   { value: "status", label: "Status" },
   { value: "filename", label: "Source Document (A–Z)" },
 ] as const;
@@ -78,6 +98,10 @@ function sortDocuments(docs: TaxDocument[], sortBy: SortValue): TaxDocument[] {
       return sorted.sort((a, b) => compareNullable(a.amount_due, b.amount_due, (x, y) => y - x));
     case "amount_due_asc":
       return sorted.sort((a, b) => compareNullable(a.amount_due, b.amount_due, (x, y) => x - y));
+    case "priority":
+      return sorted.sort((a, b) =>
+        compareNullable(a.priority, b.priority, (x, y) => PRIORITY_RANK[x] - PRIORITY_RANK[y]),
+      );
     case "status":
       return sorted.sort((a, b) => a.status.localeCompare(b.status));
     case "filename":
@@ -303,6 +327,7 @@ export default function App() {
                   <th className="px-4 py-3">Jurisdiction</th>
                   <th className="px-4 py-3">Issue Summary</th>
                   <th className="px-4 py-3">Amount Due</th>
+                  <th className="px-4 py-3">Priority</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3"></th>
                 </tr>
@@ -316,6 +341,9 @@ export default function App() {
                     <td className="px-4 py-3 text-gray-600">{display(doc.jurisdiction)}</td>
                     <td className="px-4 py-3 max-w-xs text-gray-600">{display(doc.issue_summary)}</td>
                     <td className="px-4 py-3 text-gray-600">{formatAmount(doc.amount_due)}</td>
+                    <td className="px-4 py-3">
+                      <PriorityPill priority={doc.priority} />
+                    </td>
                     <td className="px-4 py-3">
                       <StatusPill status={doc.status} onClick={() => handleToggleStatus(doc)} />
                     </td>

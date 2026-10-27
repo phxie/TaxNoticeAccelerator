@@ -1,3 +1,5 @@
+export type Priority = "high" | "medium" | "low";
+
 export interface TaxDocument {
   id: number;
   filename: string;
@@ -9,6 +11,7 @@ export interface TaxDocument {
   issue_summary: string | null;
   amount_due: number | null;
   status: string;
+  priority: Priority | null;
 }
 
 export async function listDocuments(): Promise<TaxDocument[]> {
@@ -24,6 +27,7 @@ export interface ExtractedFields {
   jurisdiction: string | null;
   issue_summary: string | null;
   amount_due: number | null;
+  priority: Priority;
 }
 
 export async function uploadDocument(file: File): Promise<ExtractedFields> {

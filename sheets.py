@@ -5,11 +5,14 @@ Google Sheets integration: the Sheet is the source of truth for documents.
 - Clicking "Sync" pulls the Sheet's current contents into the local
   dashboard, fully replacing what's there.
 
-The last two columns (`uploaded_at`, `stored_file`) are internal bookkeeping
+`uploaded_at` and `stored_file` are internal bookkeeping
 so a synced-back row can still be linked to its PDF on disk for View/Download
 — `stored_file` is the file's name under `taxdocs/`, not an absolute path
 (absolute local paths would be meaningless if the sheet is ever viewed from
 another machine).
+
+New columns are only ever appended at the end, so rows already written to an
+existing sheet keep lining up with COLUMNS.
 """
 
 import os
@@ -31,6 +34,7 @@ COLUMNS = [
     "status",
     "uploaded_at",
     "stored_file",
+    "priority",
 ]
 
 HEADERS = [
@@ -43,6 +47,7 @@ HEADERS = [
     "Status",
     "Uploaded At",
     "Stored File",
+    "Priority",
 ]
 
 VALID_STATUSES = ["open", "closed"]
@@ -93,8 +98,9 @@ def _apply_status_dropdown(service, spreadsheet_id: str, sheet_name: str) -> Non
 
 
 def _ensure_header(service, spreadsheet_id: str, sheet_name: str) -> None:
-    result = service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=f"{sheet_name}!A1:A1").execute()
-    if not result.get("values"):
+    # Rewritten whenever it differs, so sheets created before a column was added get its header.
+    result = service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=f"{sheet_name}!1:1").execute()
+    if result.get("values", [[]])[0] != HEADERS:
         service.spreadsheets().values().update(
             spreadsheetId=spreadsheet_id,
             range=f"{sheet_name}!A1",
@@ -121,6 +127,7 @@ def append_document(filename: str, file_path: str, uploaded_at: str, fields: dic
         "status": "open",
         "uploaded_at": uploaded_at,
         "stored_file": os.path.basename(file_path),
+        "priority": fields.get("priority") or "",
     }
     row = [values_map[column] for column in COLUMNS]
 
@@ -220,6 +227,7 @@ def fetch_documents() -> list[dict]:
                 "status": values_map["status"] or "open",
                 "uploaded_at": values_map["uploaded_at"],
                 "stored_file": values_map["stored_file"],
+                "priority": values_map["priority"] or None,
             }
         )
     return documents

@@ -20,6 +20,7 @@ FAKE_FIELDS = {
     "jurisdiction": "IRS",
     "issue_summary": "Test notice summary.",
     "amount_due": 500.0,
+    "priority": "high",
 }
 
 
@@ -34,6 +35,7 @@ def seed_document(conn, **overrides):
         "issue_summary": "Existing summary.",
         "amount_due": 250.0,
         "status": "open",
+        "priority": "medium",
     }
     doc.update(overrides)
     db.replace_all_documents(conn, [doc])
@@ -172,6 +174,7 @@ def test_sync_sheet_replaces_local_state(client, monkeypatch):
             "status": "open",
             "uploaded_at": "2024-06-01T00:00:00+00:00",
             "stored_file": "abc123_fresh.pdf",
+            "priority": "low",
         }
     ]
     monkeypatch.setattr("app.sheets.fetch_documents", lambda: sheet_rows)
@@ -184,6 +187,7 @@ def test_sync_sheet_replaces_local_state(client, monkeypatch):
     doc = body["documents"][0]
     assert doc["filename"] == "fresh.pdf"
     assert doc["file_path"].endswith("abc123_fresh.pdf")
+    assert doc["priority"] == "low"
 
     # stale.pdf from before the sync must be gone
     filenames = {d["filename"] for d in client.get("/api/documents").get_json()}
@@ -202,6 +206,7 @@ def test_sync_sheet_empty_stored_file_yields_empty_file_path(client, monkeypatch
             "status": "open",
             "uploaded_at": "",
             "stored_file": "",
+            "priority": None,
         }
     ]
     monkeypatch.setattr("app.sheets.fetch_documents", lambda: sheet_rows)
@@ -209,6 +214,35 @@ def test_sync_sheet_empty_stored_file_yields_empty_file_path(client, monkeypatch
     response = client.post("/api/documents/sync-sheet")
     assert response.status_code == 200
     assert response.get_json()["documents"][0]["file_path"] == ""
+    assert response.get_json()["documents"][0]["priority"] is None
+
+
+def test_init_schema_adds_priority_to_existing_db(tmp_path, monkeypatch):
+    monkeypatch.setenv("DB_PATH", str(tmp_path / "legacy.db"))
+    with db.get_connection() as conn:
+        conn.execute(
+            """
+            CREATE TABLE documents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                filename TEXT NOT NULL,
+                file_path TEXT NOT NULL,
+                uploaded_at TEXT NOT NULL,
+                notice_date TEXT,
+                tax_year INTEGER,
+                jurisdiction TEXT,
+                issue_summary TEXT,
+                amount_due REAL,
+                status TEXT NOT NULL DEFAULT 'open'
+            )
+            """
+        )
+        conn.execute("INSERT INTO documents (filename, file_path, uploaded_at) VALUES ('old.pdf', '', '')")
+        conn.commit()
+
+        db.init_schema(conn)
+        db.init_schema(conn)  # idempotent
+
+        assert db.list_documents(conn)[0]["priority"] is None
 
 
 def test_sync_sheet_failure(client, monkeypatch):

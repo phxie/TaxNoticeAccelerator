@@ -25,7 +25,8 @@ CREATE TABLE IF NOT EXISTS documents (
     jurisdiction TEXT,
     issue_summary TEXT,
     amount_due REAL,
-    status TEXT NOT NULL DEFAULT 'open'
+    status TEXT NOT NULL DEFAULT 'open',
+    priority TEXT
 );
 """
 
@@ -44,6 +45,10 @@ def get_connection() -> Iterator[sqlite3.Connection]:
 
 def init_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
+    # Databases created before the priority column existed need it added in place.
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(documents)")}
+    if "priority" not in columns:
+        conn.execute("ALTER TABLE documents ADD COLUMN priority TEXT")
     conn.commit()
 
 
@@ -53,8 +58,8 @@ def replace_all_documents(conn: sqlite3.Connection, documents: list[dict]) -> No
     conn.executemany(
         """
         INSERT INTO documents
-            (filename, file_path, uploaded_at, notice_date, tax_year, jurisdiction, issue_summary, amount_due, status)
-        VALUES (:filename, :file_path, :uploaded_at, :notice_date, :tax_year, :jurisdiction, :issue_summary, :amount_due, :status)
+            (filename, file_path, uploaded_at, notice_date, tax_year, jurisdiction, issue_summary, amount_due, status, priority)
+        VALUES (:filename, :file_path, :uploaded_at, :notice_date, :tax_year, :jurisdiction, :issue_summary, :amount_due, :status, :priority)
         """,
         documents,
     )
